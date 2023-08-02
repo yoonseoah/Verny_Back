@@ -3,7 +3,7 @@ from django.urls import path
 
 app_name = "main"
 
-
+# 작품목록조회, 작품 해설(detail) 조회, 댓글 조회, 작성, 삭제, 수정 url.
 urlpatterns = [
     path("posts/", PostListView.as_view()),
     path("posts/<int:pk>/", PostDetailView.as_view()),
