@@ -29,6 +29,7 @@ class Post(models.Model):
     type = models.CharField(max_length=128, choices=type_choices)
     # 고전미술, 현대미술 체크하고 해시태그 기능 사용해서 나중에 나눠서 보여줄 때 사용할 코드.
     image = models.ImageField(upload_to="images/", blank=True, null=True)  # 작품 이미지 첨부
+    scraps = models.ManyToManyField(User, related_name="scraped_posts", blank=True)
 
     def __str__(self):
         return self.title

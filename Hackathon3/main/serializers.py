@@ -10,10 +10,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     comment = CommentSerializer(many=True, read_only=True)
-
+    scraps_count = serializers.SerializerMethodField()
+    
     class Meta:
         model = Post
-        fields = [
+        fields = [ 
             "id",
             "title",
             "painter",
@@ -22,5 +23,10 @@ class PostSerializer(serializers.ModelSerializer):
             "content",
             "type_choices",
             "type",
-            "image",
+            "scraps",
+            "scraps_count",
+            "comment",
+            
         ]
+    def get_scraps_count(self, obj):
+        return obj.scraps.count()
