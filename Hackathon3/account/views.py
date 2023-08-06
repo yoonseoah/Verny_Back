@@ -34,8 +34,24 @@ class ProfileView(views.APIView):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
+    # def get(self, request, format=None):
+    #     serializer = ProfileSerializer(request.user)
+    #     return Response({'message': '프로필 가져오기 성공', 'data': serializer.data}, status=HTTP_200_OK)
+
+    # def put(self, request, format=None):
+    #     serializer = ProfileSerializer(data=request.user)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response({'message': '프로필 가져오기 성공', 'data': serializer.data}, status=HTTP_200_OK)
+    #     return Response(serializer.errors)
+
     def get(self, request, format=None):
-        serializer = ProfileSerializer(request.user)
+        serializer = self.serializer_class(request.user)  # Assuming the profile is related to the user
         return Response({'message': '프로필 가져오기 성공', 'data': serializer.data}, status=HTTP_200_OK)
 
-    #def put(self, request, format=None):
+    def put(self, request, format=None):
+        serializer = self.serializer_class(request.user, data=request.data, partial=True)  # Using request data to update the profile
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '프로필 업데이트 성공', 'data': serializer.data}, status=HTTP_200_OK)
+        return Response({'message': '프로필 업데이트 실패', 'data': serializer.errors}, status=HTTP_400_BAD_REQUEST)
