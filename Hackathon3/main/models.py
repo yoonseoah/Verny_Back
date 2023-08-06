@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 
 """
@@ -9,12 +9,12 @@ class User 부분은 임의로 해놓은 부분!(서아 account부분이랑 합�
 
 
 # Create your models here.
-class User(AbstractUser):
-    email = models.EmailField(max_length=100, unique=True)
+#class User(AbstractUser):
+    #email = models.EmailField(max_length=100, unique=True)
 
 
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # 게시물 작성자
+    author = models.ForeignKey('account.User', null=True, on_delete=models.CASCADE)  # 게시물 작성자
     title = models.CharField(max_length=200)
     painter = models.CharField(max_length=30)  # 그림 작품 작가
     drawing_technique = models.CharField(
@@ -35,7 +35,7 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # 댓글 작성자
+    author = models.ForeignKey('account.User', null=True, on_delete=models.CASCADE)  # 댓글 작성자
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField()  # 댓글 내용
