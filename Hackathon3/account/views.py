@@ -36,4 +36,6 @@ class ProfileView(views.APIView):
 
     def get(self, request, format=None):
         serializer = ProfileSerializer(request.user)
-        return Response({'message': '프로필 가져오기 성공', 'data': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'message': '프로필 가져오기 성공', 'data': serializer.data}, status=HTTP_200_OK)
+
+    #def put(self, request, format=None):
