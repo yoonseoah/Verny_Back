@@ -10,4 +10,5 @@ urlpatterns = [
     path("comments/", CommentView.as_view()),
     path("comments/<int:comment_pk>/", CommentDetailView.as_view()),
     path('posts/<int:pk>/scrap/', PostScrapView.as_view(), name='post_scrap'),
+    path("search/", SearchView.as_view()),
 ]

@@ -4,7 +4,7 @@ from .serializers import *
 from .models import *
 from rest_framework import views
 from rest_framework.response import Response
-
+from django.db.models import Q
 # Create your views here.
 
 
@@ -81,3 +81,16 @@ class PostScrapView(views.APIView):
 
 
 
+class SearchView(views.APIView):
+    def get(self, request):
+        queryset = Post.objects.all()
+        search_query = request.query_params.get('q')
+
+        if search_query:
+            queryset = queryset.filter(
+                Q(content__icontains=search_query) |  
+                Q(title__icontains=search_query) |
+                Q(painter__icontains=search_query)
+            )
+        serializer = PostSerializer(queryset,many=True)
+        return Response(serializer.data)
