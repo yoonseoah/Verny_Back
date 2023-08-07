@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 
 
@@ -10,12 +10,12 @@ class User 부분은 임의로 해놓은 부분!(서아 account부분이랑 합�
 
 
 # Create your models here.
-class User(AbstractUser):
-    email = models.EmailField(max_length=100, unique=True)
+#class User(AbstractUser):
+    #email = models.EmailField(max_length=100, unique=True)
 
 
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # 게시물 작성자
+    author = models.ForeignKey('account.User', null=True, on_delete=models.CASCADE)  # 게시물 작성자
     title = models.CharField(max_length=200)
     painter = models.CharField(max_length=30)  # 그림 작품 작가
     drawing_technique = models.CharField(
@@ -30,7 +30,7 @@ class Post(models.Model):
     type = models.CharField(max_length=128, choices=type_choices)
     # 고전미술, 현대미술 체크하고 해시태그 기능 사용해서 나중에 나눠서 보여줄 때 사용할 코드.
     image = models.ImageField(upload_to="images/", blank=True, null=True)  # 작품 이미지 첨부
-    scraps = models.ManyToManyField(User, related_name="scraped_posts", blank=True)
+    scraps = models.ManyToManyField('account.User', related_name="scraped_posts", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -38,25 +38,25 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # 댓글 작성자
+    author = models.ForeignKey('account.User', null=True, on_delete=models.CASCADE)  # 댓글 작성자
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField()  # 댓글 내용
-    likes = models.ManyToManyField(User, related_name="liked_comments", blank=True)
-    # def get_comment_like_count(self):
-    # return self.comment_like.count()
+    likes = models.ManyToManyField('account.User',related_name="liked_comments", blank=True )
+    #def get_comment_like_count(self):
+        #return self.comment_like.count()
 
-    # def update_like_count(self):
-    # self.like_count = self.get_comment_like_count()
-    # self.save()
+    #def update_like_count(self):
+        #self.like_count = self.get_comment_like_count()
+        #self.save()
 
 
 class Recomment(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # 대댓글 작성자
+    author = models.ForeignKey('account.User', on_delete=models.CASCADE)  # 대댓글 작성자
     comment = models.ForeignKey(
         Comment, on_delete=models.CASCADE, related_name="recomments"
     )
     # 대댓글이 달린 댓글
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField()  # 대댓글 내용
-    relikes = models.ManyToManyField(User, related_name="liked_recomments", blank=True)
+    relikes = models.ManyToManyField('account.User',related_name="liked_recomments", blank=True )

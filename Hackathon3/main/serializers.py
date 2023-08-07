@@ -8,7 +8,7 @@ from .models import *
 
 
 class RecommentSerializer(serializers.ModelSerializer):
-    # recomment_like = LikeSerializer(many=True, read_only=True)
+    #recomment_like = LikeSerializer(many=True, read_only=True)
     relikes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,13 +21,12 @@ class RecommentSerializer(serializers.ModelSerializer):
             "relikes",
             "relikes_count",
         )
-
+    
     def get_relikes_count(self, obj):
         return obj.relikes.count()
 
-
 class CommentSerializer(serializers.ModelSerializer):
-    # comment_like = LikeSerializer(many=True, read_only=True)
+    #comment_like = LikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     recomments = RecommentSerializer(many=True, read_only=True)
 
@@ -55,7 +54,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = [
+        fields = [ 
             "id",
             "title",
             "painter",
@@ -66,41 +65,39 @@ class PostSerializer(serializers.ModelSerializer):
             # "type",
             # "scraps",
             "scraps_count",
-            # "created_at",
-            # "comment",
+            #"created_at",
+            #"comment",
             "comment_count",
         ]
-
     def get_scraps_count(self, obj):
         return obj.scraps.count()
 
     def get_comment_count(self, obj):
         return obj.comment.count()
 
-
 class PosDetailSerializer(serializers.ModelSerializer):
-    # comment = CommentSerializer(many=True, read_only=True)
+    #comment = CommentSerializer(many=True, read_only=True)
     scraps_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = [
-            # "id",
+        fields = [ 
+            #"id",
             "content",
             "title",
             "painter",
             "drawing_technique",
             "work_year",
-            # "type_choices",
+            
+            #"type_choices",
             "type",
             "scraps",
             "scraps_count",
             "created_at",
-            # "comment",
+            #"comment",
             "comment_count",
         ]
-
     def get_scraps_count(self, obj):
         return obj.scraps.count()
 
