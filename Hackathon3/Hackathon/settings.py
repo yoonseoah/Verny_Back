@@ -39,8 +39,20 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    #"django.contrib.sites",
+
+    # 설치한 라이브러리 
     "rest_framework",
     "rest_framework_simplejwt",
+    # "rest_framework.authtoken",
+    # "dj_rest_auth",
+    # "dj_rest_auth.registration",
+    # "allauth",
+    # "allauth.account",
+    # "allauth.socialaccount",
+    # "allauth.socialaccount.providers.kakao",
+
+    # 생성한 앱
     "account",
     "main",
 ]
@@ -53,6 +65,7 @@ REST_FRAMEWORK = {
 }
 
 REST_USE_JWT = True
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

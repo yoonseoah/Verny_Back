@@ -21,4 +21,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("main/", include("main.urls")),
     path("account/", include("account.urls")),
+    #path("account/kakao/", include("allauth.urls")),
 ]
