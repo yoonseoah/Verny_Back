@@ -53,10 +53,37 @@ class Comment(models.Model):
 
 class Recomment(models.Model):
     author = models.ForeignKey('account.User', on_delete=models.CASCADE)  # 대댓글 작성자
-    comment = models.ForeignKey(
-        Comment, on_delete=models.CASCADE, related_name="recomments"
-    )
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="recomments")
     # 대댓글이 달린 댓글
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField()  # 대댓글 내용
     relikes = models.ManyToManyField('account.User',related_name="liked_recomments", blank=True )
+
+class Place(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=128)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    description = models.TextField()
+    category_choices = [
+        ("레저/체육/공원", "레저/체육/공원"),
+        ("문화관광/명소", "문화관광/명소"),
+        ("전시/공연", "전시/공연"),
+    ]  # 게시글 등록할 때 고전미술인지, 현대미술인지 체크하는 코드
+    category = models.CharField(max_length=50, choices=category_choices)  
+    parking_choices = [
+        ("무료주차", "무료주차"),
+        ("유료주차", "유료주차"),
+        ("장애인주차", "장애인주차"),
+    ]  
+    parking = models.CharField(max_length=50, choices=parking_choices)
+    facilities_choices = [
+        ("장애인화장실", "장애인화장실"),
+        ("휠체어대여", "휠체어대여"),
+    ]  
+    facilities = models.CharField(max_length=50, choices=facilities_choices)
+    guide_choices = [
+        ("점자가이드", "점자가이드"),
+        ("한국어오디오가이드", "한국어오디오가이드"),
+    ]  
+    guide = models.CharField(max_length=50, choices=guide_choices)

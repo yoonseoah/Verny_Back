@@ -3,16 +3,15 @@ from django.shortcuts import get_object_or_404
 from .serializers import *
 from .models import *
 from rest_framework import views
-from rest_framework import status
+from rest_framework.status import *
 from rest_framework.response import Response
 from django.db.models import Q, Count
+
 
 # Create your views here.
 
 
 class PostListView(views.APIView):
-    # 게시글 목록 view 부분. 조회, 작성. 지금 보니까 api명세서에 POST 메소드 추가 필요한 것 같아요. 의견 주세요!
-
     def get(self, request):
         order_by = request.query_params.get('order_by')
         type_filter = request.query_params.get('type')
@@ -30,16 +29,18 @@ class PostListView(views.APIView):
             queryset = queryset.filter(type=type_filter)
 
         serializer = PostSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=HTTP_200_OK)
 #http://your-domain/main/posts/?order_by=most_scrapped
 #http://127.0.0.1:8000/main/posts/?type=고전미술, 현대미술
 
+class PostAddView(views.APIView):
     def post(self, request, format=None):  # 게시글 작성 POST 메소드입니다!
-        serializer = PostSerializer(data=request.data)
+        serializer = PostSerializer(request.data,request.FILES)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.error)
+            return Response({'message': '포스트 작성 성공', 'data': serializer.data}, status=HTTP_200_OK)
+
+        return Response(serializer.errors)
 
 
 class PostDetailView(views.APIView):  # 작품 해설(detail) 조회
@@ -48,75 +49,14 @@ class PostDetailView(views.APIView):  # 작품 해설(detail) 조회
         serializer = PosDetailSerializer(post)
         return Response(serializer.data)
 
-
-class CommentView(views.APIView):  # 댓글 조회, 작성
-
-
-    def get(self, request, pk, format=None):
-        comment = Comment.objects.filter(post_id=pk)
-        serializer = CommentSerializer(comment, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
-    
-
-class CommentDetailView(views.APIView):  # 댓글 수정,삭제
-    def put(self, request, comment_pk, format=None):
-        comment = get_object_or_404(Comment, pk=comment_pk)
-        serializer = CommentSerializer(Comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
-    def delete(self, request, comment_pk, format=None):
-        comment = get_object_or_404(Comment, pk=comment_pk)
-        comment.delete()
-        return Response({"message": "댓글 삭제 성공"})
-
-
-class RecommentView(views.APIView):
-    def get(self, request, format=None):
-        recomments = Recomment.objects.all()
-        serializer = RecommentSerializer(recomments, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer = RecommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
-
-class RecommentDetailView(views.APIView):
-    def put(self, request, recomment_pk, format=None):
-        recomment = get_object_or_404(Recomment, pk=recomment_pk)
-        serializer = RecommentSerializer(recomment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
-    def delete(self, request, recomment_pk, format=None):
-        recomment = get_object_or_404(Recomment, pk=recomment_pk)
-        recomment.delete()
-        return Response({"message": "대댓글 삭제 성공"})
-
-
 class PostScrapView(views.APIView):
-    def get(self, request, post_id):
-        post = get_object_or_404(Post, pk=post_id)
+    def get(self, request, pk):
+        post = get_object_or_404(Post, id=pk)
         scraped_by_user = request.user in post.scraps.all()
         return Response({'scraped': scraped_by_user})
 
-    def post(self, request, post_id):
-        post = get_object_or_404(Post, pk=post_id)
+    def post(self, request, pk):
+        post = get_object_or_404(Post,id=pk)
         user = request.user
 
         if user in post.scraps.all():
@@ -126,7 +66,129 @@ class PostScrapView(views.APIView):
             post.scraps.add(user)
             scraped = True
 
-        return Response({'scraped':scraped, 'post': serializers.data})
+        return Response({"message": "스크랩 변경 성공",'scraped':scraped})
+
+class CommentView(views.APIView):  # 댓글 조회, 작성
+    #def get(self, request, pk, format=None):
+    #    comment = Comment.objects.filter(post_id=pk)
+    #    serializer = CommentSerializer(comment, many=True)
+    #    return Response(serializer.data)
+
+
+    def get(self, request, pk):
+        order_by = request.query_params.get('order_by')
+
+        queryset = Comment.objects.all()
+
+        if order_by == 'latest': #최신순으로
+            queryset = queryset.order_by('-created_at')
+        elif order_by == 'most_liked': #좋아요 많은 순으로
+            queryset = queryset.annotate(likes_count=Count('likes')).order_by('-likes_count')
+        
+        serializer = CommentSerializer(queryset, many=True)  # 적절한 시리얼라이저 사용
+        return Response(serializer.data)
+#http://127.0.0.1:8000/main/posts/1/comments/?order_by=lastest
+
+    def post(self, request, pk, format=None):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(post_id=pk)
+            return Response({'message': '댓글작성 성공', 'data': serializer.data})
+        return Response(serializer.errors) 
+    
+
+
+class CommentDetailView(views.APIView):  # 댓글 수정,삭제, 대댓글 작성
+    def get(self, request, pk, comment_pk, format=None):
+        comment = get_object_or_404(Comment,post_id=pk, pk=comment_pk)
+        serializer = CommentDetailSerializer(comment)
+        return Response(serializer.data)
+
+    def delete(self, request, pk, comment_pk, format=None):
+        comment = get_object_or_404(Comment, pk=comment_pk, post_id=pk)
+        comment.delete()
+        return Response({"message": "댓글 삭제 성공"})
+
+    def put(self, request, pk, comment_pk, format=None):
+        comment = get_object_or_404(Comment, pk=comment_pk, post_id=pk)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '댓글수정 성공', 'data': serializer.data})
+        return Response({'message': '댓글수정 실패', 'data': serializer.errors})
+
+    def post(self, request, pk, comment_pk, format=None):
+        comment = get_object_or_404(Comment, post_id=pk, pk=comment_pk)
+        serializer = RecommentSerializer(data=request.data)
+        if serializer.is_valid():
+            recomment = serializer.save(author=request.user, comment=comment)
+            recomment_serializer = RecommentSerializer(recomment)
+            return Response({'message': '대댓글 작성 성공', 'data': recomment_serializer.data}, status=HTTP_201_CREATED)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    
+class CommentLikeView(views.APIView): #댓글 좋아요
+    def get(self, request,pk, comment_pk):
+        comment = get_object_or_404(Comment, post_id=pk, pk=comment_pk)
+        liked_by_user = request.user in comment.likes.all()
+        return Response({'liked': liked_by_user})
+
+    def post(self, request,pk, comment_pk):
+        comment = get_object_or_404(Comment, post_id=pk, pk=comment_pk)
+        user = request.user
+
+        if user in comment.likes.all():
+            comment.likes.remove(user)
+            liked = False
+        else:
+            comment.likes.add(user)
+            liked = True
+
+        return Response({"message": "좋아요 변경 성공",'liked':liked})
+
+
+
+class RecommentDetailView(views.APIView): #대댓글 조회, 수정, 삭제
+    def get(self, request,pk,recomment_pk, format=None):
+        recomment = get_object_or_404(Recomment, pk=recomment_pk)
+        serializer = RecommentSerializer(recomment)
+        return Response(serializer.data)
+    
+    def put(self, request,pk, recomment_pk, format=None):
+        recomment = get_object_or_404(Recomment, pk=recomment_pk)
+        serializer = RecommentSerializer(recomment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+    def delete(self, request,pk,recomment_pk, format=None):
+        recomment = get_object_or_404(Recomment, pk=recomment_pk)
+        recomment.delete()
+        return Response({"message": "대댓글 삭제 성공"})
+    
+    
+
+class RecommentLikeView(views.APIView): #대댓글 좋아요
+    def get(self, request,pk, recomment_pk):
+        recomment = get_object_or_404(Recomment, pk=recomment_pk)
+        reliked_by_user = request.user in recomment.relikes.all()
+        return Response({'reliked': reliked_by_user})
+
+    def post(self, request,pk, recomment_pk):
+        recomment = get_object_or_404(Recomment, pk=recomment_pk)
+        user = request.user
+
+        if user in recomment.relikes.all():
+            recomment.relikes.remove(user)
+            reliked = False
+        else:
+            recomment.relikes.add(user)
+            reliked = True
+
+        return Response({"message": "대댓글 좋아요 변경 성공",'reliked':reliked})
+
+
 
 class SearchView(views.APIView):
     def get(self, request):
@@ -139,45 +201,18 @@ class SearchView(views.APIView):
                 Q(title__icontains=search_query) |
                 Q(painter__icontains=search_query)
             )
-        serializer = PostSerializer(queryset,many=True)
-        return Response(serializer.data)
+            serializer = PostSerializer(queryset,many=True)
+            if queryset.exists():  # Check if any results exist
+                return Response({'message': '검색 조회 성공', 'data': serializer.data})
+            else:
+                return Response({'message': '검색결과가 없어요. 다시 시도해주시겠어요?'}, status=HTTP_204_NO_CONTENT)
+        else:
+            return Response({'message': '검색어를 입력하세요.'}, status=HTTP_400_BAD_REQUEST)
     #http://your-domain/main/search/?q=search-keyword
 
 
-class CommentLikeView(views.APIView):
-    def get(self, request, comment_id):
-        comment = get_object_or_404(Comment, pk=comment_id)
-        liked_by_user = request.user in comment.likes.all()
-        return Response({'liked': liked_by_user})
-
-    def post(self, request, comment_id):
-        comment = get_object_or_404(Comment, pk=comment_id)
-        user = request.user
-
-        if user in comment.likes.all():
-            comment.likes.remove(user)
-            liked = False
-        else:
-            comment.likes.add(user)
-            liked = True
-
-        return Response({'liked':liked, 'comment': serializers.data})
-    
-class RecommentLikeView(views.APIView):
-    def get(self, request, recomment_id):
-        recomment = get_object_or_404(Recomment, pk=recomment_id)
-        reliked_by_user = request.user in recomment.relikes.all()
-        return Response({'reliked': reliked_by_user})
-
-    def post(self, request, recomment_id):
-        recomment = get_object_or_404(Recomment, pk=recomment_id)
-        user = request.user
-
-        if user in recomment.relikes.all():
-            recomment.relikes.remove(user)
-            reliked = False
-        else:
-            recomment.relikes.add(user)
-            reliked = True
-
-        return Response({'reliked':reliked, 'recomment': serializers.data})
+class PlaceView(views.APIView):
+    def get(self, reqeuest, format=None):
+        place = get_object_or_404(Place)
+        serializer = PlaceSerializer(place)
+        return Response(serializer.data)
