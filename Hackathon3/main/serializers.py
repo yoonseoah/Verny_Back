@@ -1,14 +1,8 @@
 from rest_framework import serializers
 from .models import *
 
-# class LikeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Like
-#         fields = ("user",)
-
 
 class RecommentSerializer(serializers.ModelSerializer):
-    #recomment_like = LikeSerializer(many=True, read_only=True)
     relikes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -26,6 +20,27 @@ class RecommentSerializer(serializers.ModelSerializer):
         return obj.relikes.count()
 
 class CommentSerializer(serializers.ModelSerializer):
+    #comment_like = LikeSerializer(many=True, read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    #recomments = RecommentSerializer(many=True, read_only=True)
+    #recomments = RecommentSerializer(many=True)
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "post",
+            "author",
+            "content",
+            "created_at",
+            "likes",
+            "likes_count",
+            #"recomments",
+        ]
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+class CommentDetailSerializer(serializers.ModelSerializer):
     #comment_like = LikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     recomments = RecommentSerializer(many=True, read_only=True)
@@ -48,25 +63,19 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    # comment = CommentSerializer(many=True, read_only=True)
+    #comment = CommentSerializer(many=True, read_only=True)
     scraps_count = serializers.SerializerMethodField()
-    comment_count = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField() 
+    image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Post
         fields = [ 
             "id",
+            "image",
             "title",
             "painter",
-            # "drawing_technique",
-            # "work_year",
-            # "content",
-            # "type_choices",
-            # "type",
-            # "scraps",
             "scraps_count",
-            #"created_at",
-            #"comment",
             "comment_count",
         ]
     def get_scraps_count(self, obj):
@@ -76,7 +85,6 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.comment.count()
 
 class PosDetailSerializer(serializers.ModelSerializer):
-    #comment = CommentSerializer(many=True, read_only=True)
     scraps_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
 
@@ -84,6 +92,7 @@ class PosDetailSerializer(serializers.ModelSerializer):
         model = Post
         fields = [ 
             #"id",
+            "image",
             "content",
             "title",
             "painter",
@@ -103,3 +112,8 @@ class PosDetailSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.comment.count()
+
+class PlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Place
+        fields = ['name','address','latitude','longitude','category','parking','facilities','guide']

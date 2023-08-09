@@ -6,3 +6,4 @@ from account.models import *
 admin.site.register(Post)
 admin.site.register(Comment)
 admin.site.register(Recomment)
+admin.site.register(Place)
