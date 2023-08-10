@@ -232,6 +232,10 @@ def load_json_and_save_to_model(file_path):
         braille = entry.get('braille')
         audio = entry.get('audio')
 
+        existing_place = Place.objects.filter(name=name).first()
+        if existing_place:
+            print(f"Place '{name}' already exists. Skipping...")
+            continue
 
         place = Place(
             name=name,
@@ -271,5 +275,4 @@ class PlaceListView(views.APIView):
 
         serializer = PlaceSerializer(queryset, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
-    
     
