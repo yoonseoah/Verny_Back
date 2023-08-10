@@ -30,12 +30,13 @@ class PostListView(views.APIView):
 
         serializer = PostSerializer(queryset, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
+
 #http://your-domain/main/posts/?order_by=most_scrapped
 #http://127.0.0.1:8000/main/posts/?type=고전미술, 현대미술
 
 class PostAddView(views.APIView):
     def post(self, request, format=None):  # 게시글 작성 POST 메소드입니다!
-        serializer = PostSerializer(request.data,request.FILES)
+        serializer = PostDetailSerializer(request.data,request.FILES)
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '포스트 작성 성공', 'data': serializer.data}, status=HTTP_200_OK)
@@ -46,7 +47,7 @@ class PostAddView(views.APIView):
 class PostDetailView(views.APIView):  # 작품 해설(detail) 조회
     def get(self, request, pk, format=None):
         post = get_object_or_404(Post, pk=pk)
-        serializer = PosDetailSerializer(post)
+        serializer = PostDetailSerializer(post)
         return Response(serializer.data)
 
 class PostScrapView(views.APIView):
@@ -78,7 +79,7 @@ class CommentView(views.APIView):  # 댓글 조회, 작성
     def get(self, request, pk):
         order_by = request.query_params.get('order_by')
 
-        queryset = Comment.objects.all()
+        queryset = Comment.objects.filter(post_id=pk)
 
         if order_by == 'latest': #최신순으로
             queryset = queryset.order_by('-created_at')
