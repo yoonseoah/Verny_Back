@@ -210,8 +210,66 @@ class SearchView(views.APIView):
     #http://your-domain/main/search/?q=search-keyword
 
 
-class PlaceView(views.APIView):
-    def get(self, reqeuest, format=None):
-        place = get_object_or_404(Place)
-        serializer = PlaceSerializer(place)
-        return Response(serializer.data)
+
+import json
+from main.models import Place
+
+def load_json_and_save_to_model(file_path):
+    with open(file_path, 'rt',encoding='UTF8') as json_file:
+        json_data = json.load(json_file)
+
+    for entry in json_data:
+        name = entry.get('name')
+        category = entry.get('category')
+        latitude = entry.get('latitude')
+        longitude = entry.get('longitude')
+        address = entry.get('address')
+        parking = entry.get('parking')
+        dis_parking = entry.get('dis_parking')
+        big_parking = entry.get('big_parking')
+        wheelchair = entry.get('wheelchair')
+        toilet = entry.get('toilet')
+        braille = entry.get('braille')
+        audio = entry.get('audio')
+
+
+        place = Place(
+            name=name,
+            category=category,
+            latitude=latitude,
+            longitude=longitude,
+            address=address,
+            parking=parking,
+            dis_parking=dis_parking,
+            big_parking=big_parking,
+            wheelchair = wheelchair,
+            toilet = toilet,
+            braille = braille,
+            audio = audio
+
+        )
+        place.save()
+load_json_and_save_to_model('지도.json')
+
+
+class PlaceListView(views.APIView):
+    def get(self, request):
+        category_filter = request.query_params.get('category')
+        parking_filter = request.query_params.get('parking')
+
+        queryset = Place.objects.all()
+
+        if category_filter:
+            categories = category_filter.split(',')
+            queryset = queryset.filter(category__in=categories)
+
+        elif parking_filter:
+            parkings = parking_filter.split(',')
+            queryset = queryset.filter(parking__in=parkings)
+        
+
+
+        serializer = PlaceSerializer(queryset, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)
+    
+    

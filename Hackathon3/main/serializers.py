@@ -49,6 +49,7 @@ class CommentDetailSerializer(serializers.ModelSerializer):
     #comment_like = LikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     recomments = RecommentSerializer(many=True, read_only=True)
+    # recomment_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -61,13 +62,14 @@ class CommentDetailSerializer(serializers.ModelSerializer):
             "likes",
             "likes_count",
             "recomments",
-            #"recomment_count",
+            # "recomment_count",
         ]
 
     def get_likes_count(self, obj):
         return obj.likes.count()
     
-    
+    #def get_recomment_count(self, obj):
+    #    return obj.recomment.count()
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -124,5 +126,18 @@ class PostDetailSerializer(serializers.ModelSerializer):
 class PlaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Place
-        fields = ['name','address','latitude','longitude','category','parking','facilities','guide']
+        fields = [
+                'name',
+                'address',
+                'latitude',
+                'longitude',
+                'category',
+                'dis_parking',
+                'big_parking',
+                'wheelchair',
+                'toilet',
+                'braille',
+                'audio'
+
+                ]
 
