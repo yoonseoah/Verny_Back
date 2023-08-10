@@ -36,12 +36,11 @@ class PostListView(views.APIView):
 
 class PostAddView(views.APIView):
     def post(self, request, format=None):  # 게시글 작성 POST 메소드입니다!
-        serializer = PostDetailSerializer(request.data,request.FILES)
+        serializer = PostDetailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '포스트 작성 성공', 'data': serializer.data}, status=HTTP_200_OK)
-
-        return Response(serializer.errors)
+        return Response({'message': '포스트 작성 실패', 'errors': serializer.errors})
 
 
 class PostDetailView(views.APIView):  # 작품 해설(detail) 조회
@@ -125,8 +124,7 @@ class CommentDetailView(views.APIView):  # 댓글 수정,삭제, 대댓글 작�
             recomment = serializer.save(author=request.user, comment=comment)
             recomment_serializer = RecommentSerializer(recomment)
             return Response({'message': '대댓글 작성 성공', 'data': recomment_serializer.data}, status=HTTP_201_CREATED)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
+        return Response(serializer.errors)
     
 class CommentLikeView(views.APIView): #댓글 좋아요
     def get(self, request,pk, comment_pk):
@@ -212,8 +210,66 @@ class SearchView(views.APIView):
     #http://your-domain/main/search/?q=search-keyword
 
 
-class PlaceView(views.APIView):
-    def get(self, reqeuest, format=None):
-        place = get_object_or_404(Place)
-        serializer = PlaceSerializer(place)
-        return Response(serializer.data)
+
+import json
+from main.models import Place
+
+def load_json_and_save_to_model(file_path):
+    with open(file_path, 'rt',encoding='UTF8') as json_file:
+        json_data = json.load(json_file)
+
+    for entry in json_data:
+        name = entry.get('name')
+        category = entry.get('category')
+        latitude = entry.get('latitude')
+        longitude = entry.get('longitude')
+        address = entry.get('address')
+        parking = entry.get('parking')
+        dis_parking = entry.get('dis_parking')
+        big_parking = entry.get('big_parking')
+        wheelchair = entry.get('wheelchair')
+        toilet = entry.get('toilet')
+        braille = entry.get('braille')
+        audio = entry.get('audio')
+
+
+        place = Place(
+            name=name,
+            category=category,
+            latitude=latitude,
+            longitude=longitude,
+            address=address,
+            parking=parking,
+            dis_parking=dis_parking,
+            big_parking=big_parking,
+            wheelchair = wheelchair,
+            toilet = toilet,
+            braille = braille,
+            audio = audio
+
+        )
+        place.save()
+load_json_and_save_to_model('지도.json')
+
+
+class PlaceListView(views.APIView):
+    def get(self, request):
+        category_filter = request.query_params.get('category')
+        parking_filter = request.query_params.get('parking')
+
+        queryset = Place.objects.all()
+
+        if category_filter:
+            categories = category_filter.split(',')
+            queryset = queryset.filter(category__in=categories)
+
+        elif parking_filter:
+            parkings = parking_filter.split(',')
+            queryset = queryset.filter(parking__in=parkings)
+        
+
+
+        serializer = PlaceSerializer(queryset, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)
+    
+    
