@@ -36,12 +36,11 @@ class PostListView(views.APIView):
 
 class PostAddView(views.APIView):
     def post(self, request, format=None):  # 게시글 작성 POST 메소드입니다!
-        serializer = PostDetailSerializer(request.data,request.FILES)
+        serializer = PostDetailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({'message': '포스트 작성 성공', 'data': serializer.data}, status=HTTP_200_OK)
-
-        return Response(serializer.errors)
+        return Response({'message': '포스트 작성 실패', 'errors': serializer.errors})
 
 
 class PostDetailView(views.APIView):  # 작품 해설(detail) 조회
@@ -125,8 +124,7 @@ class CommentDetailView(views.APIView):  # 댓글 수정,삭제, 대댓글 작�
             recomment = serializer.save(author=request.user, comment=comment)
             recomment_serializer = RecommentSerializer(recomment)
             return Response({'message': '대댓글 작성 성공', 'data': recomment_serializer.data}, status=HTTP_201_CREATED)
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
+        return Response(serializer.errors)
     
 class CommentLikeView(views.APIView): #댓글 좋아요
     def get(self, request,pk, comment_pk):
