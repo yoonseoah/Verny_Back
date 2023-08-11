@@ -15,7 +15,6 @@ class PostListView(views.APIView):
     def get(self, request):
         order_by = request.query_params.get('order_by')
         type_filter = request.query_params.get('type')
-
         queryset = Post.objects.all()
 
         if order_by == 'latest': #최신순으로
@@ -29,7 +28,11 @@ class PostListView(views.APIView):
             queryset = queryset.filter(type=type_filter)
 
         serializer = PostSerializer(queryset, many=True)
-        return Response(serializer.data, status=HTTP_200_OK)
+        post_count = Post.objects.count()  # Post 모델의 총 갯수 계산
+        message = f"현재 등록된 포스트 갯수: {post_count}"
+        
+        return Response({'message': message, 'data':serializer.data})
+
 
 #http://your-domain/main/posts/?order_by=most_scrapped
 #http://127.0.0.1:8000/main/posts/?type=고전미술, 현대미술
@@ -69,12 +72,6 @@ class PostScrapView(views.APIView):
         return Response({"message": "스크랩 변경 성공",'scraped':scraped})
 
 class CommentView(views.APIView):  # 댓글 조회, 작성
-    #def get(self, request, pk, format=None):
-    #    comment = Comment.objects.filter(post_id=pk)
-    #    serializer = CommentSerializer(comment, many=True)
-    #    return Response(serializer.data)
-
-
     def get(self, request, pk):
         order_by = request.query_params.get('order_by')
 
@@ -121,7 +118,7 @@ class CommentDetailView(views.APIView):  # 댓글 수정,삭제, 대댓글 작�
         comment = get_object_or_404(Comment, post_id=pk, pk=comment_pk)
         serializer = RecommentSerializer(data=request.data)
         if serializer.is_valid():
-            recomment = serializer.save(author=request.user, comment=comment)
+            recomment = serializer.save(comment=comment)
             recomment_serializer = RecommentSerializer(recomment)
             return Response({'message': '대댓글 작성 성공', 'data': recomment_serializer.data}, status=HTTP_201_CREATED)
         return Response(serializer.errors)
@@ -200,9 +197,15 @@ class SearchView(views.APIView):
                 Q(title__icontains=search_query) |
                 Q(painter__icontains=search_query)
             )
-            serializer = PostSerializer(queryset,many=True)
-            if queryset.exists():  # Check if any results exist
-                return Response({'message': '검색 조회 성공', 'data': serializer.data})
+            search_result_count = queryset.count()
+            
+            if search_result_count > 0:
+                serializer = PostSerializer(queryset, many=True)
+                return Response({
+                    'message': '검색 조회 성공',
+                    'data': serializer.data,
+                    'result_count': search_result_count  # Include the result count in the response
+                })
             else:
                 return Response({'message': '검색결과가 없어요. 다시 시도해주시겠어요?'}, status=HTTP_204_NO_CONTENT)
         else:
@@ -210,69 +213,3 @@ class SearchView(views.APIView):
     #http://your-domain/main/search/?q=search-keyword
 
 
-
-import json
-from main.models import Place
-
-def load_json_and_save_to_model(file_path):
-    with open(file_path, 'rt',encoding='UTF8') as json_file:
-        json_data = json.load(json_file)
-
-    for entry in json_data:
-        name = entry.get('name')
-        category = entry.get('category')
-        latitude = entry.get('latitude')
-        longitude = entry.get('longitude')
-        address = entry.get('address')
-        parking = entry.get('parking')
-        dis_parking = entry.get('dis_parking')
-        big_parking = entry.get('big_parking')
-        wheelchair = entry.get('wheelchair')
-        toilet = entry.get('toilet')
-        braille = entry.get('braille')
-        audio = entry.get('audio')
-
-        existing_place = Place.objects.filter(name=name).first()
-        if existing_place:
-            print(f"Place '{name}' already exists. Skipping...")
-            continue
-
-        place = Place(
-            name=name,
-            category=category,
-            latitude=latitude,
-            longitude=longitude,
-            address=address,
-            parking=parking,
-            dis_parking=dis_parking,
-            big_parking=big_parking,
-            wheelchair = wheelchair,
-            toilet = toilet,
-            braille = braille,
-            audio = audio
-
-        )
-        place.save()
-load_json_and_save_to_model('지도.json')
-
-
-class PlaceListView(views.APIView):
-    def get(self, request):
-        category_filter = request.query_params.get('category')
-        parking_filter = request.query_params.get('parking')
-
-        queryset = Place.objects.all()
-
-        if category_filter:
-            categories = category_filter.split(',')
-            queryset = queryset.filter(category__in=categories)
-
-        elif parking_filter:
-            parkings = parking_filter.split(',')
-            queryset = queryset.filter(parking__in=parkings)
-        
-
-
-        serializer = PlaceSerializer(queryset, many=True)
-        return Response(serializer.data, status=HTTP_200_OK)
-    

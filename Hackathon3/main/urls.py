@@ -15,5 +15,6 @@ urlpatterns = [
     path("posts/<int:pk>/recomments/<int:recomment_pk>/relikes", RecommentLikeView.as_view()),
     path("posts/<int:pk>/scrap/", PostScrapView.as_view()),
     path("search/", SearchView.as_view()),
-    path("place/", PlaceListView.as_view()),
+
 ]
+
