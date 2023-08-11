@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-
+from django.db.models import Q
 
 class RecommentSerializer(serializers.ModelSerializer):
     relikes_count = serializers.SerializerMethodField()
@@ -20,36 +20,33 @@ class RecommentSerializer(serializers.ModelSerializer):
         return obj.relikes.count()
 
 class CommentSerializer(serializers.ModelSerializer):
-    #comment_like = LikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
-    #recomment_count = serializers.SerializerMethodField()
+    recomments_count = serializers.SerializerMethodField()
     #recomments = RecommentSerializer(many=True, read_only=True)
-    #recomments = RecommentSerializer(many=True)
     class Meta:
         model = Comment
         fields = [
             "id",
-            #"post",
             "author",
             "content",
             "created_at",
             "likes",
             "likes_count",
             #"recomments",
-            #"recomment_count",
+            "recomments_count",
         ]
-
-    #def get_recomment_count(self, obj):
-    #    return obj.recomment.count()
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+    
+    def get_recomments_count(self, obj):
+        return obj.recomments.count()
 
 class CommentDetailSerializer(serializers.ModelSerializer):
     #comment_like = LikeSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     recomments = RecommentSerializer(many=True, read_only=True)
-    # recomment_count = serializers.SerializerMethodField()
+    #recomment_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -62,7 +59,7 @@ class CommentDetailSerializer(serializers.ModelSerializer):
             "likes",
             "likes_count",
             "recomments",
-            # "recomment_count",
+            #"recomment_count",
         ]
 
     def get_likes_count(self, obj):
@@ -119,25 +116,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
         ]
     def get_scraps_count(self, obj):
         return obj.scraps.count()
-
+    
     def get_comment_count(self, obj):
         return obj.comment.count()
-
-class PlaceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Place
-        fields = [
-                'name',
-                'address',
-                'latitude',
-                'longitude',
-                'category',
-                'dis_parking',
-                'big_parking',
-                'wheelchair',
-                'toilet',
-                'braille',
-                'audio'
-
-                ]
 
