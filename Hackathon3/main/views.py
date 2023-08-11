@@ -27,11 +27,17 @@ class PostListView(views.APIView):
         if type_filter:
             queryset = queryset.filter(type=type_filter)
 
+        filtered_post_count = queryset.count()
+
+        # Serialize queryset and include filtered_post_count
         serializer = PostSerializer(queryset, many=True)
-        post_count = Post.objects.count()  # Post 모델의 총 갯수 계산
-        message = f"현재 등록된 포스트 갯수: {post_count}"
+        response_data = {
+            'post_count': filtered_post_count,
+            'posts': serializer.data
+        }
         
-        return Response({'message': message, 'data':serializer.data})
+        return Response(response_data)
+
 
 
 #http://your-domain/main/posts/?order_by=most_scrapped
