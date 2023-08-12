@@ -5,12 +5,11 @@ from .models import User
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'nickname']
+        fields = ['id', 'username', 'password']
 
     def create(self, validated_data):
         user = User.objects.create(
-            username=validated_data['username'],
-            nickname=validated_data['nickname'])
+            username=validated_data['username'])
         user.set_password(validated_data['password'])
         user.save()
 
@@ -35,7 +34,6 @@ class LoginSerializer(serializers.Serializer):
 
                 data = {
                     'id': user.id,
-                    'nickname': user.nickname ,
                     'access_token': access
                 }
 
@@ -46,4 +44,4 @@ class LoginSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'nickname']
+        fields = ['id', 'username']
